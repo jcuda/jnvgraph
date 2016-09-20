@@ -29,7 +29,7 @@
                             <classesDirectory>nativeLibraries\${jcuda.os}\${jcuda.arch}</classesDirectory>
                             <classifier>${jcuda.os}-${jcuda.arch}</classifier>
                             <includes>
-                                <include>lib/*JNVgraph*</include>
+                                <include>lib/*JNvgraph*</include>
                             </includes>
                         </configuration>
                     </execution>
