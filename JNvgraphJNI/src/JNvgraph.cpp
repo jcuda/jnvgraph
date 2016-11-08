@@ -34,6 +34,7 @@
 
 jclass nvgraphCSRTopology32I_Class;
 jclass nvgraphCSCTopology32I_Class;
+jclass nvgraphCOOTopology32I_Class;
 
 // Field IDs for the nvgraphCSRTopology32I_st class
 jfieldID fid_nvgraphCSRTopology32I_st_nvertices; // int
@@ -47,7 +48,12 @@ jfieldID fid_nvgraphCSCTopology32I_st_nedges; // int
 jfieldID fid_nvgraphCSCTopology32I_st_destination_offsets; // int *
 jfieldID fid_nvgraphCSCTopology32I_st_source_indices; // int *
 
-
+// Field IDs for the nvgraphCOOTopology32I_st class
+jfieldID fid_nvgraphCOOTopology32I_st_nvertices; // int
+jfieldID fid_nvgraphCOOTopology32I_st_nedges; // int
+jfieldID fid_nvgraphCOOTopology32I_st_source_indices; // int *
+jfieldID fid_nvgraphCOOTopology32I_st_destination_indices; // int *
+jfieldID fid_nvgraphCOOTopology32I_st_tag; // int
 
 
 /**
@@ -72,6 +78,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     // Initialize the topology type classes
     if (!init(env, nvgraphCSRTopology32I_Class, "jcuda/jnvgraph/nvgraphCSRTopology32I")) return JNI_ERR;
     if (!init(env, nvgraphCSCTopology32I_Class, "jcuda/jnvgraph/nvgraphCSCTopology32I")) return JNI_ERR;
+    if (!init(env, nvgraphCOOTopology32I_Class, "jcuda/jnvgraph/nvgraphCOOTopology32I")) return JNI_ERR;
 
     jclass cls = NULL;
 
@@ -89,6 +96,15 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     if (!init(env, cls, fid_nvgraphCSCTopology32I_st_destination_offsets , "destination_offsets", "Ljcuda/Pointer;")) return JNI_ERR;
     if (!init(env, cls, fid_nvgraphCSCTopology32I_st_source_indices      , "source_indices"     , "Ljcuda/Pointer;")) return JNI_ERR;
 
+    // Initialize the field IDs for the nvgraphCOOTopology32I_st class
+    if (!init(env, cls, "jcuda/jnvgraph/nvgraphCOOTopology32I")) return JNI_ERR;
+    if (!init(env, cls, fid_nvgraphCOOTopology32I_st_nvertices          , "nvertices"          , "I"))               return JNI_ERR;
+    if (!init(env, cls, fid_nvgraphCOOTopology32I_st_nedges             , "nedges"             , "I"))               return JNI_ERR;
+    if (!init(env, cls, fid_nvgraphCOOTopology32I_st_source_indices     , "source_indices"     , "Ljcuda/Pointer;")) return JNI_ERR;
+    if (!init(env, cls, fid_nvgraphCOOTopology32I_st_destination_indices, "destination_indices", "Ljcuda/Pointer;")) return JNI_ERR;
+    if (!init(env, cls, fid_nvgraphCOOTopology32I_st_tag                , "tag"                , "I"))               return JNI_ERR;
+
+
     return JNI_VERSION_1_4;
 }
 
@@ -99,7 +115,7 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
 */
 typedef struct nvgraphTopologyData
 {
-    /** The native nvgraphCSCTopology32I or nvgraphCSRTopology32I object */
+    /** The native nvgraph*Topology object */
     void *nativeTopologyData;
 
     /** The data for the source object (source_indices or source_offsets) */
@@ -188,6 +204,46 @@ nvgraphTopologyData* initNativeTopologyDataCSR32I(JNIEnv *env, jobject &javaObje
     return result;
 }
 
+/**
+* Create a nvgraphToplogyData object from the given input.
+* Returns NULL if the given object is NULL, or if any
+* error occurs.
+*/
+nvgraphTopologyData* initNativeTopologyDataCOO32I(JNIEnv *env, jobject &input)
+{
+    if (input == NULL)
+    {
+        return NULL;
+    }
+    nvgraphTopologyData* result = new nvgraphTopologyData();
+
+    nvgraphCOOTopology32I_st* nativeResult = new nvgraphCOOTopology32I_st();
+    result->nativeTopologyData = nativeResult;
+
+    nativeResult->nedges = (int)env->GetIntField(input, fid_nvgraphCOOTopology32I_st_nedges);
+    nativeResult->nvertices = (int)env->GetIntField(input, fid_nvgraphCOOTopology32I_st_nvertices);
+
+    jobject source = env->GetObjectField(input, fid_nvgraphCOOTopology32I_st_source_indices);
+    result->source_PointerData = initPointerData(env, source);
+    if (result->source_PointerData == NULL)
+    {
+        return NULL;
+    }
+    nativeResult->source_indices = (int*)result->source_PointerData->getPointer(env);
+
+    jobject destination = env->GetObjectField(input, fid_nvgraphCOOTopology32I_st_destination_indices);
+    result->destination_PointerData = initPointerData(env, destination);
+    if (result->destination_PointerData == NULL)
+    {
+        return NULL;
+    }
+    nativeResult->destination_indices = (int*)result->destination_PointerData->getPointer(env);
+
+    nativeResult->tag = (nvgraphTag_t)env->GetIntField(input, fid_nvgraphCOOTopology32I_st_tag);
+
+    return result;
+}
+
 
 /**
  * Create the nvgraphTopologyData object from the given 
@@ -211,7 +267,11 @@ nvgraphTopologyData* initNativeTopologyData(JNIEnv *env, jobject &javaObject)
     {
         return initNativeTopologyDataCSR32I(env, javaObject);
     }
-    ThrowByName(env, "java/lang/IllegalArgumentException", 
+    else if (env->IsInstanceOf(javaObject, nvgraphCOOTopology32I_Class))
+    {
+        return initNativeTopologyDataCOO32I(env, javaObject);
+    }
+    ThrowByName(env, "java/lang/IllegalArgumentException",
         "Topology data parameter does not have a valid type");
     return false;
 }
@@ -473,7 +533,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetGraphStructureNati
 }
 
 /** Query size and topology information from the graph descriptor */
-JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetGraphStructureNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject topologyData, jint TType)
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetGraphStructureNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject topologyData, jintArray TType)
 {
     // Null-checks for non-primitive arguments
     if (handle == NULL)
@@ -491,10 +551,14 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetGraphStructureNati
         ThrowByName(env, "java/lang/NullPointerException", "Parameter 'topologyData' is null for nvgraphGetGraphStructure");
         return JNVGRAPH_STATUS_INTERNAL_ERROR;
     }
-    // TType is primitive
+    if (TType == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'TType' is null for nvgraphGetGraphStructure");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
 
     // Log message
-    Logger::log(LOG_TRACE, "Executing nvgraphGetGraphStructure(handle=%p, descrG=%p, topologyData=%p, TType=%d)\n",
+    Logger::log(LOG_TRACE, "Executing nvgraphGetGraphStructure(handle=%p, descrG=%p, topologyData=%p, TType=%p)\n",
         handle, descrG, topologyData, TType);
 
     // Native variable declarations
@@ -512,16 +576,15 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetGraphStructureNati
         return JNVGRAPH_STATUS_INTERNAL_ERROR;
     }
     topologyData_native = topologyData_Data->nativeTopologyData;
-    TType_native = (nvgraphTopologyType_t)TType;
 
     // Native function call
-    nvgraphStatus_t jniResult_native = nvgraphGetGraphStructure(handle_native, descrG_native, topologyData_native, TType_native);
+    nvgraphStatus_t jniResult_native = nvgraphGetGraphStructure(handle_native, descrG_native, topologyData_native, &TType_native);
 
     // Write back native variable values
     // handle is read-only
     // descrG is read-only
     if (!releaseNativeTopologyData(env, topologyData_Data)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
-    // TType is primitive
+    if (!set(env, TType, 0, (jint)TType_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
 
     // Return the result
     jint jniResult = (jint)jniResult_native;
@@ -644,7 +707,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphAllocateEdgeDataNativ
 
 /** Update the vertex set #setnum with the data in *vertexData, sets have 0-based index
 *  Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
-JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetVertexDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject vertexData, jlong setnum, jint TType)
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetVertexDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject vertexData, jlong setnum)
 {
     // Null-checks for non-primitive arguments
     if (handle == NULL)
@@ -663,18 +726,16 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetVertexDataNative(J
         return JNVGRAPH_STATUS_INTERNAL_ERROR;
     }
     // setnum is primitive
-    // TType is primitive
 
     // Log message
-    Logger::log(LOG_TRACE, "Executing nvgraphSetVertexData(handle=%p, descrG=%p, vertexData=%p, setnum=%ld, TType=%d)\n",
-        handle, descrG, vertexData, setnum, TType);
+    Logger::log(LOG_TRACE, "Executing nvgraphSetVertexData(handle=%p, descrG=%p, vertexData=%p, setnum=%ld)\n",
+        handle, descrG, vertexData, setnum);
 
     // Native variable declarations
     nvgraphHandle_t handle_native;
     nvgraphGraphDescr_t descrG_native;
     void * vertexData_native = NULL;
     size_t setnum_native = 0;
-    nvgraphTopologyType_t TType_native;
 
     // Obtain native variable values
     handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
@@ -686,17 +747,15 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetVertexDataNative(J
     }
     vertexData_native = (void *)vertexData_pointerData->getPointer(env);
     setnum_native = (size_t)setnum;
-    TType_native = (nvgraphTopologyType_t)TType;
 
     // Native function call
-    nvgraphStatus_t jniResult_native = nvgraphSetVertexData(handle_native, descrG_native, vertexData_native, setnum_native, TType_native);
+    nvgraphStatus_t jniResult_native = nvgraphSetVertexData(handle_native, descrG_native, vertexData_native, setnum_native);
 
     // Write back native variable values
     // handle is read-only
     // descrG is read-only
     if (!releasePointerData(env, vertexData_pointerData, JNI_ABORT)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     // setnum is primitive
-    // TType is primitive
 
     // Return the result
     jint jniResult = (jint)jniResult_native;
@@ -705,7 +764,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetVertexDataNative(J
 
 /** Copy the edge set #setnum in *edgeData, sets have 0-based index
 *  Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
-JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetVertexDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject vertexData, jlong setnum, jint TType)
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetVertexDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject vertexData, jlong setnum)
 {
     // Null-checks for non-primitive arguments
     if (handle == NULL)
@@ -724,18 +783,16 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetVertexDataNative(J
         return JNVGRAPH_STATUS_INTERNAL_ERROR;
     }
     // setnum is primitive
-    // TType is primitive
 
     // Log message
-    Logger::log(LOG_TRACE, "Executing nvgraphGetVertexData(handle=%p, descrG=%p, vertexData=%p, setnum=%ld, TType=%d)\n",
-        handle, descrG, vertexData, setnum, TType);
+    Logger::log(LOG_TRACE, "Executing nvgraphGetVertexData(handle=%p, descrG=%p, vertexData=%p, setnum=%ld)\n",
+        handle, descrG, vertexData, setnum);
 
     // Native variable declarations
     nvgraphHandle_t handle_native;
     nvgraphGraphDescr_t descrG_native;
     void * vertexData_native = NULL;
     size_t setnum_native = 0;
-    nvgraphTopologyType_t TType_native;
 
     // Obtain native variable values
     handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
@@ -747,10 +804,9 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetVertexDataNative(J
     }
     vertexData_native = (void *)vertexData_pointerData->getPointer(env);
     setnum_native = (size_t)setnum;
-    TType_native = (nvgraphTopologyType_t)TType;
 
     // Native function call
-    nvgraphStatus_t jniResult_native = nvgraphGetVertexData(handle_native, descrG_native, vertexData_native, setnum_native, TType_native);
+    nvgraphStatus_t jniResult_native = nvgraphGetVertexData(handle_native, descrG_native, vertexData_native, setnum_native);
 
     // Write back native variable values
     // handle is read-only
@@ -762,7 +818,163 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetVertexDataNative(J
     }
     if (!releasePointerData(env, vertexData_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     // setnum is primitive
-    // TType is primitive
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+/** Convert the edge data to another topology
+*/
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphConvertTopologyNative(JNIEnv *env, jclass cls, jobject handle, jint srcTType, jobject srcTopology, jobject srcEdgeData, jobject dataType, jint dstTType, jobject dstTopology, jobject dstEdgeData)
+{
+    // Null-checks for non-primitive arguments
+    if (handle == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'handle' is null for nvgraphConvertTopology");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // srcTType is primitive
+    if (srcTopology == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'srcTopology' is null for nvgraphConvertTopology");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (srcEdgeData == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'srcEdgeData' is null for nvgraphConvertTopology");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (dataType == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'dataType' is null for nvgraphConvertTopology");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // dstTType is primitive
+    if (dstTopology == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'dstTopology' is null for nvgraphConvertTopology");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (dstEdgeData == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'dstEdgeData' is null for nvgraphConvertTopology");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphConvertTopology(handle=%p, srcTType=%d, srcTopology=%p, srcEdgeData=%p, dataType=%p, dstTType=%d, dstTopology=%p, dstEdgeData=%p)\n",
+        handle, srcTType, srcTopology, srcEdgeData, dataType, dstTType, dstTopology, dstEdgeData);
+
+    // Native variable declarations
+    nvgraphHandle_t handle_native;
+    nvgraphTopologyType_t srcTType_native;
+    void * srcTopology_native = NULL;
+    void * srcEdgeData_native = NULL;
+    cudaDataType_t * dataType_native = NULL;
+    nvgraphTopologyType_t dstTType_native;
+    void * dstTopology_native = NULL;
+    void * dstEdgeData_native = NULL;
+
+    // Obtain native variable values
+    handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
+    srcTType_native = (nvgraphTopologyType_t)srcTType;
+    nvgraphTopologyData* srcTopology_Data = initNativeTopologyData(env, srcTopology);
+    if (srcTopology_Data == NULL)
+    {
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    srcTopology_native = srcTopology_Data->nativeTopologyData;
+    PointerData *srcEdgeData_pointerData = initPointerData(env, srcEdgeData);
+    if (srcEdgeData_pointerData == NULL)
+    {
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    srcEdgeData_native = srcEdgeData_pointerData->getPointer(env);
+    PointerData *dataType_pointerData = initPointerData(env, dataType);
+    if (dataType_pointerData == NULL)
+    {
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    dataType_native = (cudaDataType_t *)dataType_pointerData->getPointer(env);
+    dstTType_native = (nvgraphTopologyType_t)dstTType;
+    nvgraphTopologyData* dstTopology_Data = initNativeTopologyData(env, dstTopology);
+    if (dstTopology_Data == NULL)
+    {
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    dstTopology_native = dstTopology_Data->nativeTopologyData;
+    PointerData *dstEdgeData_pointerData = initPointerData(env, dstEdgeData);
+    if (dstEdgeData_pointerData == NULL)
+    {
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    dstEdgeData_native = dstEdgeData_pointerData->getPointer(env);
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphConvertTopology(handle_native, srcTType_native, srcTopology_native, srcEdgeData_native, dataType_native, dstTType_native, dstTopology_native, dstEdgeData_native);
+
+    // Write back native variable values
+    // handle is read-only
+    // srcTType is primitive
+    if (!releaseNativeTopologyData(env, srcTopology_Data)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releasePointerData(env, srcEdgeData_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releasePointerData(env, dataType_pointerData, JNI_ABORT)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // dstTType is primitive
+    if (!releaseNativeTopologyData(env, dstTopology_Data)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releasePointerData(env, dstEdgeData_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+/** Convert graph to another structure
+*/
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphConvertGraphNative(JNIEnv *env, jclass cls, jobject handle, jobject srcDescrG, jobject dstDescrG, jint dstTType)
+{
+    // Null-checks for non-primitive arguments
+    if (handle == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'handle' is null for nvgraphConvertGraph");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (srcDescrG == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'srcDescrG' is null for nvgraphConvertGraph");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (dstDescrG == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'dstDescrG' is null for nvgraphConvertGraph");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // dstTType is primitive
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphConvertGraph(handle=%p, srcDescrG=%p, dstDescrG=%p, dstTType=%d)\n",
+        handle, srcDescrG, dstDescrG, dstTType);
+
+    // Native variable declarations
+    nvgraphHandle_t handle_native;
+    nvgraphGraphDescr_t srcDescrG_native;
+    nvgraphGraphDescr_t dstDescrG_native;
+    nvgraphTopologyType_t dstTType_native;
+
+    // Obtain native variable values
+    handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
+    srcDescrG_native = (nvgraphGraphDescr_t)getNativePointerValue(env, srcDescrG);
+    dstDescrG_native = (nvgraphGraphDescr_t)getNativePointerValue(env, dstDescrG);
+    dstTType_native = (nvgraphTopologyType_t)dstTType;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphConvertGraph(handle_native, srcDescrG_native, dstDescrG_native, dstTType_native);
+
+    // Write back native variable values
+    // handle is read-only
+    // srcDescrG is read-only
+    // dstDescrG is read-only
+    // dstTType is primitive
 
     // Return the result
     jint jniResult = (jint)jniResult_native;
@@ -771,7 +983,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetVertexDataNative(J
 
 /** Update the edge set #setnum with the data in *edgeData, sets have 0-based index
 *  Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
-JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject edgeData, jlong setnum, jint TType)
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject edgeData, jlong setnum)
 {
     // Null-checks for non-primitive arguments
     if (handle == NULL)
@@ -790,18 +1002,16 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative(JNI
         return JNVGRAPH_STATUS_INTERNAL_ERROR;
     }
     // setnum is primitive
-    // TType is primitive
 
     // Log message
-    Logger::log(LOG_TRACE, "Executing nvgraphSetEdgeData(handle=%p, descrG=%p, edgeData=%p, setnum=%ld, TType=%d)\n",
-        handle, descrG, edgeData, setnum, TType);
+    Logger::log(LOG_TRACE, "Executing nvgraphSetEdgeData(handle=%p, descrG=%p, edgeData=%p, setnum=%ld)\n",
+        handle, descrG, edgeData, setnum);
 
     // Native variable declarations
     nvgraphHandle_t handle_native;
     nvgraphGraphDescr_t descrG_native;
     void * edgeData_native = NULL;
     size_t setnum_native = 0;
-    nvgraphTopologyType_t TType_native;
 
     // Obtain native variable values
     handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
@@ -813,17 +1023,15 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative(JNI
     }
     edgeData_native = (void *)edgeData_pointerData->getPointer(env);
     setnum_native = (size_t)setnum;
-    TType_native = (nvgraphTopologyType_t)TType;
 
     // Native function call
-    nvgraphStatus_t jniResult_native = nvgraphSetEdgeData(handle_native, descrG_native, edgeData_native, setnum_native, TType_native);
+    nvgraphStatus_t jniResult_native = nvgraphSetEdgeData(handle_native, descrG_native, edgeData_native, setnum_native);
 
     // Write back native variable values
     // handle is read-only
     // descrG is read-only
     if (!releasePointerData(env, edgeData_pointerData, JNI_ABORT)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     // setnum is primitive
-    // TType is primitive
 
     // Return the result
     jint jniResult = (jint)jniResult_native;
@@ -832,7 +1040,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative(JNI
 
 /** Copy the edge set #setnum in *edgeData, sets have 0-based index
 * Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
-JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetEdgeDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject edgeData, jlong setnum, jint TType)
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetEdgeDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject edgeData, jlong setnum)
 {
     // Null-checks for non-primitive arguments
     if (handle == NULL)
@@ -851,18 +1059,16 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetEdgeDataNative(JNI
         return JNVGRAPH_STATUS_INTERNAL_ERROR;
     }
     // setnum is primitive
-    // TType is primitive
 
     // Log message
-    Logger::log(LOG_TRACE, "Executing nvgraphGetEdgeData(handle=%p, descrG=%p, edgeData=%p, setnum=%ld, TType=%d)\n",
-        handle, descrG, edgeData, setnum, TType);
+    Logger::log(LOG_TRACE, "Executing nvgraphGetEdgeData(handle=%p, descrG=%p, edgeData=%p, setnum=%ld)\n",
+        handle, descrG, edgeData, setnum);
 
     // Native variable declarations
     nvgraphHandle_t handle_native;
     nvgraphGraphDescr_t descrG_native;
     void * edgeData_native = NULL;
     size_t setnum_native = 0;
-    nvgraphTopologyType_t TType_native;
 
     // Obtain native variable values
     handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
@@ -874,10 +1080,9 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetEdgeDataNative(JNI
     }
     edgeData_native = (void *)edgeData_pointerData->getPointer(env);
     setnum_native = (size_t)setnum;
-    TType_native = (nvgraphTopologyType_t)TType;
 
     // Native function call
-    nvgraphStatus_t jniResult_native = nvgraphGetEdgeData(handle_native, descrG_native, edgeData_native, setnum_native, TType_native);
+    nvgraphStatus_t jniResult_native = nvgraphGetEdgeData(handle_native, descrG_native, edgeData_native, setnum_native);
 
     // Write back native variable values
     // handle is read-only
@@ -889,7 +1094,6 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetEdgeDataNative(JNI
     }
     if (!releasePointerData(env, edgeData_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     // setnum is primitive
-    // TType is primitive
 
     // Return the result
     jint jniResult = (jint)jniResult_native;
@@ -1309,5 +1513,6 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphPagerankNative(JNIEnv
     jint jniResult = (jint)jniResult_native;
     return jniResult;
 }
+
 
 

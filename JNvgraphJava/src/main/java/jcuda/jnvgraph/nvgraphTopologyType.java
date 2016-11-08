@@ -32,7 +32,8 @@ public class nvgraphTopologyType
 {
     public static final int NVGRAPH_CSR_32 = 0;
     public static final int NVGRAPH_CSC_32 = 1;
-
+    public static final int NVGRAPH_COO_32 = 2;
+    
     /**
      * Private constructor to prevent instantiation
      */
@@ -52,6 +53,7 @@ public class nvgraphTopologyType
         {
             case NVGRAPH_CSR_32: return "NVGRAPH_CSR_32";
             case NVGRAPH_CSC_32: return "NVGRAPH_CSC_32";
+            case NVGRAPH_COO_32: return "NVGRAPH_COO_32";
         }
         return "INVALID nvgraphTopologyType: "+n;
     }

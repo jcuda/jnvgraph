@@ -94,10 +94,10 @@ extern "C" {
     /*
     * Class:     jcuda_jnvgraph_JNvgraph
     * Method:    nvgraphGetGraphStructureNative
-    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljava/lang/Object;I)I
+    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljava/lang/Object;[I)I
     */
     JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetGraphStructureNative
-        (JNIEnv *, jclass, jobject, jobject, jobject, jint);
+        (JNIEnv *, jclass, jobject, jobject, jobject, jintArray);
 
     /*
     * Class:     jcuda_jnvgraph_JNvgraph
@@ -118,34 +118,50 @@ extern "C" {
     /*
     * Class:     jcuda_jnvgraph_JNvgraph
     * Method:    nvgraphSetVertexDataNative
-    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;JI)I
+    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;J)I
     */
     JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetVertexDataNative
-        (JNIEnv *, jclass, jobject, jobject, jobject, jlong, jint);
+        (JNIEnv *, jclass, jobject, jobject, jobject, jlong);
 
     /*
     * Class:     jcuda_jnvgraph_JNvgraph
     * Method:    nvgraphGetVertexDataNative
-    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;JI)I
+    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;J)I
     */
     JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetVertexDataNative
-        (JNIEnv *, jclass, jobject, jobject, jobject, jlong, jint);
+        (JNIEnv *, jclass, jobject, jobject, jobject, jlong);
+
+    /*
+    * Class:     jcuda_jnvgraph_JNvgraph
+    * Method:    nvgraphConvertTopologyNative
+    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;ILjcuda/Pointer;Ljcuda/Pointer;Ljcuda/Pointer;ILjcuda/Pointer;Ljcuda/Pointer;)I
+    */
+    JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphConvertTopologyNative
+        (JNIEnv *, jclass, jobject, jint, jobject, jobject, jobject, jint, jobject, jobject);
+
+    /*
+    * Class:     jcuda_jnvgraph_JNvgraph
+    * Method:    nvgraphConvertGraphNative
+    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/jnvgraph/nvgraphGraphDescr;I)I
+    */
+    JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphConvertGraphNative
+        (JNIEnv *, jclass, jobject, jobject, jobject, jint);
 
     /*
     * Class:     jcuda_jnvgraph_JNvgraph
     * Method:    nvgraphSetEdgeDataNative
-    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;JI)I
+    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;J)I
     */
     JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative
-        (JNIEnv *, jclass, jobject, jobject, jobject, jlong, jint);
+        (JNIEnv *, jclass, jobject, jobject, jobject, jlong);
 
     /*
     * Class:     jcuda_jnvgraph_JNvgraph
     * Method:    nvgraphGetEdgeDataNative
-    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;JI)I
+    * Signature: (Ljcuda/jnvgraph/nvgraphHandle;Ljcuda/jnvgraph/nvgraphGraphDescr;Ljcuda/Pointer;J)I
     */
     JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetEdgeDataNative
-        (JNIEnv *, jclass, jobject, jobject, jobject, jlong, jint);
+        (JNIEnv *, jclass, jobject, jobject, jobject, jlong);
 
     /*
     * Class:     jcuda_jnvgraph_JNvgraph

@@ -211,7 +211,7 @@ public class JNvgraph
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Object topologyData, 
-        int TType)
+        int[] TType)
     {
         return checkResult(nvgraphGetGraphStructureNative(handle, descrG, topologyData, TType));
     }
@@ -219,10 +219,10 @@ public class JNvgraph
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Object topologyData, 
-        int TType);
+        int[] TType);
 
 
-    /** Allocate numsets vectors of size V reprensenting Vertex Data and attached them the graph. 
+    /** Allocate numsets vectors of size V reprensenting Vertex Data and attached them the graph.
      * settypes[i] is the type of vector #i, currently all Vertex and Edge data should have the same type */
     public static int nvgraphAllocateVertexData(
         nvgraphHandle handle, 
@@ -239,7 +239,7 @@ public class JNvgraph
         Pointer settypes);
 
 
-    /** Allocate numsets vectors of size E reprensenting Edge Data and attached them the graph. 
+    /** Allocate numsets vectors of size E reprensenting Edge Data and attached them the graph.
      * settypes[i] is the type of vector #i, currently all Vertex and Edge data should have the same type */
     public static int nvgraphAllocateEdgeData(
         nvgraphHandle handle, 
@@ -262,17 +262,15 @@ public class JNvgraph
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer vertexData, 
-        long setnum, 
-        int TType)
+        long setnum)
     {
-        return checkResult(nvgraphSetVertexDataNative(handle, descrG, vertexData, setnum, TType));
+        return checkResult(nvgraphSetVertexDataNative(handle, descrG, vertexData, setnum));
     }
     private static native int nvgraphSetVertexDataNative(
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer vertexData, 
-        long setnum, 
-        int TType);
+        long setnum);
 
 
     /** Copy the edge set #setnum in *edgeData, sets have 0-based index
@@ -281,17 +279,57 @@ public class JNvgraph
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer vertexData, 
-        long setnum, 
-        int TType)
+        long setnum)
     {
-        return checkResult(nvgraphGetVertexDataNative(handle, descrG, vertexData, setnum, TType));
+        return checkResult(nvgraphGetVertexDataNative(handle, descrG, vertexData, setnum));
     }
     private static native int nvgraphGetVertexDataNative(
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer vertexData, 
-        long setnum, 
-        int TType);
+        long setnum);
+
+
+    /** Convert the edge data to another topology
+     */
+    public static int nvgraphConvertTopology(
+        nvgraphHandle handle, 
+        int srcTType, 
+        Pointer srcTopology, 
+        Pointer srcEdgeData, 
+        Pointer dataType, 
+        int dstTType, 
+        Pointer dstTopology, 
+        Pointer dstEdgeData)
+    {
+        return checkResult(nvgraphConvertTopologyNative(handle, srcTType, srcTopology, srcEdgeData, dataType, dstTType, dstTopology, dstEdgeData));
+    }
+    private static native int nvgraphConvertTopologyNative(
+        nvgraphHandle handle, 
+        int srcTType, 
+        Pointer srcTopology, 
+        Pointer srcEdgeData, 
+        Pointer dataType, 
+        int dstTType, 
+        Pointer dstTopology, 
+        Pointer dstEdgeData);
+
+
+    /** Convert graph to another structure
+     */
+    public static int nvgraphConvertGraph(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr srcDescrG, 
+        nvgraphGraphDescr dstDescrG, 
+        int dstTType)
+    {
+        return checkResult(nvgraphConvertGraphNative(handle, srcDescrG, dstDescrG, dstTType));
+    }
+    private static native int nvgraphConvertGraphNative(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr srcDescrG, 
+        nvgraphGraphDescr dstDescrG, 
+        int dstTType);
 
 
     /** Update the edge set #setnum with the data in *edgeData, sets have 0-based index
@@ -300,17 +338,15 @@ public class JNvgraph
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer edgeData, 
-        long setnum, 
-        int TType)
+        long setnum)
     {
-        return checkResult(nvgraphSetEdgeDataNative(handle, descrG, edgeData, setnum, TType));
+        return checkResult(nvgraphSetEdgeDataNative(handle, descrG, edgeData, setnum));
     }
     private static native int nvgraphSetEdgeDataNative(
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer edgeData, 
-        long setnum, 
-        int TType);
+        long setnum);
 
 
     /** Copy the edge set #setnum in *edgeData, sets have 0-based index
@@ -319,17 +355,15 @@ public class JNvgraph
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer edgeData, 
-        long setnum, 
-        int TType)
+        long setnum)
     {
-        return checkResult(nvgraphGetEdgeDataNative(handle, descrG, edgeData, setnum, TType));
+        return checkResult(nvgraphGetEdgeDataNative(handle, descrG, edgeData, setnum));
     }
     private static native int nvgraphGetEdgeDataNative(
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
         Pointer edgeData, 
-        long setnum, 
-        int TType);
+        long setnum);
 
 
     /** create a new graph by extracting a subgraph given a list of vertices
@@ -370,7 +404,7 @@ public class JNvgraph
         long numedges);
 
 
-    /** nvGRAPH Semi-ring sparse matrix vector multiplication 
+    /** nvGRAPH Semi-ring sparse matrix vector multiplication
      */
     public static int nvgraphSrSpmv(
         nvgraphHandle handle, 
@@ -415,7 +449,7 @@ public class JNvgraph
         long sssp_index);
 
 
-    /** nvGRAPH WidestPath 
+    /** nvGRAPH WidestPath
      * Find widest path potential from source_index to every other vertices.
      */
     public static int nvgraphWidestPath(

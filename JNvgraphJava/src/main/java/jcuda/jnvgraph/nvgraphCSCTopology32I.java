@@ -35,9 +35,24 @@ import jcuda.Pointer;
  */
 public class nvgraphCSCTopology32I extends NativePointerObject
 {
+    /**
+     * n+1
+     */
     public int nvertices;
+    
+    /**
+     * nnz
+     */
     public int nedges;
+    
+    /**
+     * colPtr
+     */
     public Pointer destination_offsets = new Pointer();
+    
+    /**
+     * rowInd
+     */
     public Pointer source_indices = new Pointer();
 
     /**
