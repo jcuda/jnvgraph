@@ -25,6 +25,7 @@ cuda_add_library(${PROJECT_NAME}
     src/JNvgraph.cpp
 )
 
+cuda_add_nvgraph_to_target(${PROJECT_NAME})
 
 target_link_libraries(${PROJECT_NAME}
     JCudaCommonJNI
