@@ -295,11 +295,11 @@ public class JNvgraph
     public static int nvgraphConvertTopology(
         nvgraphHandle handle, 
         int srcTType, 
-        Pointer srcTopology, 
+        Object srcTopology, 
         Pointer srcEdgeData, 
         Pointer dataType, 
         int dstTType, 
-        Pointer dstTopology, 
+        Object dstTopology, 
         Pointer dstEdgeData)
     {
         return checkResult(nvgraphConvertTopologyNative(handle, srcTType, srcTopology, srcEdgeData, dataType, dstTType, dstTopology, dstEdgeData));
@@ -307,11 +307,11 @@ public class JNvgraph
     private static native int nvgraphConvertTopologyNative(
         nvgraphHandle handle, 
         int srcTType, 
-        Pointer srcTopology, 
+        Object srcTopology, 
         Pointer srcEdgeData, 
         Pointer dataType, 
         int dstTType, 
-        Pointer dstTopology, 
+        Object dstTopology, 
         Pointer dstEdgeData);
 
 
@@ -495,5 +495,6 @@ public class JNvgraph
         long pagerank_index, 
         float tolerance, 
         int max_iter);
+
 }
 
