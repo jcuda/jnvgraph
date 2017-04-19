@@ -167,6 +167,29 @@ nvgraphTopologyData* initNativeTopologyDataCSC32I(JNIEnv *env, jobject &input)
 }
 
 /**
+ * Release the given nvgraphTopologyData. The source- and destination pointer data
+ * will be released, and the information about the number of vertices and edges
+ * will be written back into the given Java Object
+ */
+bool releaseNativeTopologyDataCSC32I(JNIEnv *env, nvgraphTopologyData* &nativeObject, jobject &javaObject)
+{
+    if (!releasePointerData(env, nativeObject->source_PointerData)) return false;
+    if (!releasePointerData(env, nativeObject->destination_PointerData)) return false;
+    if (javaObject != NULL)
+    {
+        nvgraphCSCTopology32I_st* nativeTopologyData = (nvgraphCSCTopology32I_st*)nativeObject->nativeTopologyData;
+        env->SetIntField(javaObject, fid_nvgraphCSCTopology32I_st_nvertices, nativeTopologyData->nvertices);
+        env->SetIntField(javaObject, fid_nvgraphCSCTopology32I_st_nedges, nativeTopologyData->nedges);
+    }
+    delete nativeObject->nativeTopologyData;
+    delete nativeObject;
+    nativeObject = NULL;
+    return true;
+}
+
+
+
+/**
 * Create a nvgraphToplogyData object from the given input.
 * Returns NULL if the given object is NULL, or if any
 * error occurs.
@@ -202,6 +225,27 @@ nvgraphTopologyData* initNativeTopologyDataCSR32I(JNIEnv *env, jobject &javaObje
     nativeResult->destination_indices = (int*)result->destination_PointerData->getPointer(env);
 
     return result;
+}
+
+/**
+* Release the given nvgraphTopologyData. The source- and destination pointer data
+* will be released, and the information about the number of vertices and edges
+* will be written back into the given Java Object
+*/
+bool releaseNativeTopologyDataCSR32I(JNIEnv *env, nvgraphTopologyData* &nativeObject, jobject &javaObject)
+{
+    if (!releasePointerData(env, nativeObject->source_PointerData)) return false;
+    if (!releasePointerData(env, nativeObject->destination_PointerData)) return false;
+    if (javaObject != NULL)
+    {
+        nvgraphCSRTopology32I_st* nativeTopologyData = (nvgraphCSRTopology32I_st*)nativeObject->nativeTopologyData;
+        env->SetIntField(javaObject, fid_nvgraphCSRTopology32I_st_nvertices, nativeTopologyData->nvertices);
+        env->SetIntField(javaObject, fid_nvgraphCSRTopology32I_st_nedges, nativeTopologyData->nedges);
+    }
+    delete nativeObject->nativeTopologyData;
+    delete nativeObject;
+    nativeObject = NULL;
+    return true;
 }
 
 /**
@@ -244,6 +288,27 @@ nvgraphTopologyData* initNativeTopologyDataCOO32I(JNIEnv *env, jobject &input)
     return result;
 }
 
+/**
+* Release the given nvgraphTopologyData. The source- and destination pointer data
+* will be released, and the information about the number of vertices and edges
+* will be written back into the given Java Object
+*/
+bool releaseNativeTopologyDataCOO32I(JNIEnv *env, nvgraphTopologyData* &nativeObject, jobject &javaObject)
+{
+    if (!releasePointerData(env, nativeObject->source_PointerData)) return false;
+    if (!releasePointerData(env, nativeObject->destination_PointerData)) return false;
+    if (javaObject != NULL)
+    {
+        nvgraphCOOTopology32I_st* nativeTopologyData = (nvgraphCOOTopology32I_st*)nativeObject->nativeTopologyData;
+        env->SetIntField(javaObject, fid_nvgraphCOOTopology32I_st_nvertices, nativeTopologyData->nvertices);
+        env->SetIntField(javaObject, fid_nvgraphCOOTopology32I_st_nedges, nativeTopologyData->nedges);
+    }
+    delete nativeObject->nativeTopologyData;
+    delete nativeObject;
+    nativeObject = NULL;
+    return true;
+}
+
 
 /**
  * Create the nvgraphTopologyData object from the given 
@@ -279,20 +344,35 @@ nvgraphTopologyData* initNativeTopologyData(JNIEnv *env, jobject &javaObject)
 /**
  * Release the given nvgraphTopologyData 
  */
-bool releaseNativeTopologyData(JNIEnv *env, nvgraphTopologyData* &nativeObject)
+bool releaseNativeTopologyData(JNIEnv *env, nvgraphTopologyData* &nativeObject, jobject &javaObject)
 {
     if (nativeObject == NULL)
     {
-        ThrowByName(env, "java/lang/NullPointerException", 
+        ThrowByName(env, "java/lang/NullPointerException",
             "Native topology data is NULL");
         return false;
     }
-    if (!releasePointerData(env, nativeObject->source_PointerData)) return false;
-    if (!releasePointerData(env, nativeObject->destination_PointerData)) return false;
-    delete nativeObject->nativeTopologyData;
-    delete nativeObject;
-    nativeObject = NULL;
-    return true;
+    if (javaObject == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException",
+            "Java topology data is NULL");
+        return false;
+    }
+    if (env->IsInstanceOf(javaObject, nvgraphCSCTopology32I_Class))
+    {
+        return releaseNativeTopologyDataCSC32I(env, nativeObject, javaObject);
+    }
+    else if (env->IsInstanceOf(javaObject, nvgraphCSRTopology32I_Class))
+    {
+        return releaseNativeTopologyDataCSR32I(env, nativeObject, javaObject);
+    }
+    else if (env->IsInstanceOf(javaObject, nvgraphCOOTopology32I_Class))
+    {
+        return releaseNativeTopologyDataCOO32I(env, nativeObject, javaObject);
+    }
+    ThrowByName(env, "java/lang/IllegalArgumentException",
+        "Topology data parameter does not have a valid type");
+    return false;
 }
 
 
@@ -524,7 +604,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetGraphStructureNati
     // Write back native variable values
     // handle is read-only
     // descrG is read-only
-    if (!releaseNativeTopologyData(env, topologyData_Data)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releaseNativeTopologyData(env, topologyData_Data, topologyData)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     // TType is primitive
 
     // Return the result
@@ -583,7 +663,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetGraphStructureNati
     // Write back native variable values
     // handle is read-only
     // descrG is read-only
-    if (!releaseNativeTopologyData(env, topologyData_Data)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releaseNativeTopologyData(env, topologyData_Data, topologyData)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     if (!set(env, TType, 0, (jint)TType_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
 
     // Return the result
@@ -917,11 +997,11 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphConvertTopologyNative
     // Write back native variable values
     // handle is read-only
     // srcTType is primitive
-    if (!releaseNativeTopologyData(env, srcTopology_Data)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releaseNativeTopologyData(env, srcTopology_Data, srcTopology)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     if (!releasePointerData(env, srcEdgeData_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     if (!releasePointerData(env, dataType_pointerData, JNI_ABORT)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     // dstTType is primitive
-    if (!releaseNativeTopologyData(env, dstTopology_Data)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releaseNativeTopologyData(env, dstTopology_Data, dstTopology)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
     if (!releasePointerData(env, dstEdgeData_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
 
     // Return the result

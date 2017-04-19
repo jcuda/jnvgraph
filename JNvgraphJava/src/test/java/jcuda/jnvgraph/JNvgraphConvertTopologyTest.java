@@ -117,10 +117,10 @@ public class JNvgraphConvertTopologyTest
             csc_weights, nedges * Sizeof.FLOAT, cudaMemcpyDeviceToHost);
         
         // TODO: This should not be necessary
-        System.out.println("JNvgraphConvertTopologyTest: " 
-            + "Setting numbers of vertices and edges in output");
-        CSC_output.nvertices = COO_input.nvertices;
-        CSC_output.nedges = COO_input.nedges;
+        //System.out.println("JNvgraphConvertTopologyTest: " 
+        //    + "Setting numbers of vertices and edges in output");
+        //CSC_output.nvertices = COO_input.nvertices;
+        //CSC_output.nedges = COO_input.nedges;
         
         boolean printResult = false;
         //printResult = true;
