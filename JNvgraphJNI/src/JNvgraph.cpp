@@ -75,10 +75,10 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     if (initJNIUtils(env) == JNI_ERR) return JNI_ERR;
     if (initPointerUtils(env) == JNI_ERR) return JNI_ERR;
 
-    // Initialize the topology type classes
-    if (!init(env, nvgraphCSRTopology32I_Class, "jcuda/jnvgraph/nvgraphCSRTopology32I")) return JNI_ERR;
-    if (!init(env, nvgraphCSCTopology32I_Class, "jcuda/jnvgraph/nvgraphCSCTopology32I")) return JNI_ERR;
-    if (!init(env, nvgraphCOOTopology32I_Class, "jcuda/jnvgraph/nvgraphCOOTopology32I")) return JNI_ERR;
+    // Initialize the topology type classes, as global references
+    if (!initGlobal(env, nvgraphCSRTopology32I_Class, "jcuda/jnvgraph/nvgraphCSRTopology32I")) return JNI_ERR;
+    if (!initGlobal(env, nvgraphCSCTopology32I_Class, "jcuda/jnvgraph/nvgraphCSCTopology32I")) return JNI_ERR;
+    if (!initGlobal(env, nvgraphCOOTopology32I_Class, "jcuda/jnvgraph/nvgraphCOOTopology32I")) return JNI_ERR;
 
     jclass cls = NULL;
 
