@@ -27,7 +27,9 @@
  */
 package jcuda.jnvgraph;
 
-/** Topology types */
+/** 
+ * Topology types 
+ */
 public class nvgraphTopologyType
 {
     public static final int NVGRAPH_CSR_32 = 0;

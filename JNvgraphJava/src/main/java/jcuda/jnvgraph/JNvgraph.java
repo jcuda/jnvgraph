@@ -146,6 +146,18 @@ public class JNvgraph
         int status);
 
 
+    /** Return properties values for the nvGraph library, such as library version */
+    public static int nvgraphGetProperty(
+        int type, 
+        int[] value)
+    {
+        return checkResult(nvgraphGetPropertyNative(type, value));
+    }
+    private static native int nvgraphGetPropertyNative(
+        int type, 
+        int[] value);
+
+
     /** Open the library and create the handle */
     public static int nvgraphCreate(
         nvgraphHandle handle)
@@ -333,7 +345,7 @@ public class JNvgraph
 
 
     /** Update the edge set #setnum with the data in *edgeData, sets have 0-based index
-     *  Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
+     */
     public static int nvgraphSetEdgeData(
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
@@ -350,7 +362,7 @@ public class JNvgraph
 
 
     /** Copy the edge set #setnum in *edgeData, sets have 0-based index
-     * Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
+     */
     public static int nvgraphGetEdgeData(
         nvgraphHandle handle, 
         nvgraphGraphDescr descrG, 
@@ -429,6 +441,164 @@ public class JNvgraph
         int SR);
 
 
+    public static int nvgraphTraversalParameterInit(
+        nvgraphTraversalParameter param)
+    {
+        return checkResult(nvgraphTraversalParameterInitNative(param));
+    }
+    private static native int nvgraphTraversalParameterInitNative(
+        nvgraphTraversalParameter param);
+
+
+    public static int nvgraphTraversalSetDistancesIndex(
+        nvgraphTraversalParameter param, 
+        long value)
+    {
+        return checkResult(nvgraphTraversalSetDistancesIndexNative(param, value));
+    }
+    private static native int nvgraphTraversalSetDistancesIndexNative(
+        nvgraphTraversalParameter param, 
+        long value);
+
+
+    public static int nvgraphTraversalGetDistancesIndex(
+        nvgraphTraversalParameter param, 
+        long[] value)
+    {
+        return checkResult(nvgraphTraversalGetDistancesIndexNative(param, value));
+    }
+    private static native int nvgraphTraversalGetDistancesIndexNative(
+        nvgraphTraversalParameter param, 
+        long[] value);
+
+
+    public static int nvgraphTraversalSetPredecessorsIndex(
+        nvgraphTraversalParameter param, 
+        long value)
+    {
+        return checkResult(nvgraphTraversalSetPredecessorsIndexNative(param, value));
+    }
+    private static native int nvgraphTraversalSetPredecessorsIndexNative(
+        nvgraphTraversalParameter param, 
+        long value);
+
+
+    public static int nvgraphTraversalGetPredecessorsIndex(
+        nvgraphTraversalParameter param, 
+        long[] value)
+    {
+        return checkResult(nvgraphTraversalGetPredecessorsIndexNative(param, value));
+    }
+    private static native int nvgraphTraversalGetPredecessorsIndexNative(
+        nvgraphTraversalParameter param, 
+        long[] value);
+
+
+    public static int nvgraphTraversalSetEdgeMaskIndex(
+        nvgraphTraversalParameter param, 
+        long value)
+    {
+        return checkResult(nvgraphTraversalSetEdgeMaskIndexNative(param, value));
+    }
+    private static native int nvgraphTraversalSetEdgeMaskIndexNative(
+        nvgraphTraversalParameter param, 
+        long value);
+
+
+    public static int nvgraphTraversalGetEdgeMaskIndex(
+        nvgraphTraversalParameter param, 
+        long[] value)
+    {
+        return checkResult(nvgraphTraversalGetEdgeMaskIndexNative(param, value));
+    }
+    private static native int nvgraphTraversalGetEdgeMaskIndexNative(
+        nvgraphTraversalParameter param, 
+        long[] value);
+
+
+    public static int nvgraphTraversalSetUndirectedFlag(
+        nvgraphTraversalParameter param, 
+        long value)
+    {
+        return checkResult(nvgraphTraversalSetUndirectedFlagNative(param, value));
+    }
+    private static native int nvgraphTraversalSetUndirectedFlagNative(
+        nvgraphTraversalParameter param, 
+        long value);
+
+
+    public static int nvgraphTraversalGetUndirectedFlag(
+        nvgraphTraversalParameter param, 
+        long[] value)
+    {
+        return checkResult(nvgraphTraversalGetUndirectedFlagNative(param, value));
+    }
+    private static native int nvgraphTraversalGetUndirectedFlagNative(
+        nvgraphTraversalParameter param, 
+        long[] value);
+
+
+    public static int nvgraphTraversalSetAlpha(
+        nvgraphTraversalParameter param, 
+        long value)
+    {
+        return checkResult(nvgraphTraversalSetAlphaNative(param, value));
+    }
+    private static native int nvgraphTraversalSetAlphaNative(
+        nvgraphTraversalParameter param, 
+        long value);
+
+
+    public static int nvgraphTraversalGetAlpha(
+        nvgraphTraversalParameter param, 
+        long[] value)
+    {
+        return checkResult(nvgraphTraversalGetAlphaNative(param, value));
+    }
+    private static native int nvgraphTraversalGetAlphaNative(
+        nvgraphTraversalParameter param, 
+        long[] value);
+
+
+    public static int nvgraphTraversalSetBeta(
+        nvgraphTraversalParameter param, 
+        long value)
+    {
+        return checkResult(nvgraphTraversalSetBetaNative(param, value));
+    }
+    private static native int nvgraphTraversalSetBetaNative(
+        nvgraphTraversalParameter param, 
+        long value);
+
+
+    public static int nvgraphTraversalGetBeta(
+        nvgraphTraversalParameter param, 
+        long[] value)
+    {
+        return checkResult(nvgraphTraversalGetBetaNative(param, value));
+    }
+    private static native int nvgraphTraversalGetBetaNative(
+        nvgraphTraversalParameter param, 
+        long[] value);
+
+
+    public static int nvgraphTraversal(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr descrG, 
+        int traversalT, 
+        Pointer source_vert, 
+        nvgraphTraversalParameter params)
+    {
+        return checkResult(nvgraphTraversalNative(handle, descrG, traversalT, source_vert, params));
+    }
+    private static native int nvgraphTraversalNative(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr descrG, 
+        int traversalT, 
+        Pointer source_vert, 
+        nvgraphTraversalParameter params);
+
+
     /** nvGRAPH Single Source Shortest Path (SSSP)
      * Calculate the shortest path distance from a single vertex in the graph to all other vertices.
      */
@@ -495,6 +665,115 @@ public class JNvgraph
         long pagerank_index, 
         float tolerance, 
         int max_iter);
+
+
+    /**
+     * <pre>
+     * nvGRAPH contraction
+     * given array of agregates contract graph with 
+     * given (Combine, Reduce) operators for Vertex Set
+     * and Edge Set;
+     * </pre>
+     */
+    public static int nvgraphContractGraph(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr descrG, 
+        nvgraphGraphDescr contrdescrG, 
+        Pointer aggregates, 
+        long numaggregates, 
+        int VertexCombineOp, 
+        int VertexReduceOp, 
+        int EdgeCombineOp, 
+        int EdgeReduceOp, 
+        int flag)
+    {
+        return checkResult(nvgraphContractGraphNative(handle, descrG, contrdescrG, aggregates, numaggregates, VertexCombineOp, VertexReduceOp, EdgeCombineOp, EdgeReduceOp, flag));
+    }
+    private static native int nvgraphContractGraphNative(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr descrG, 
+        nvgraphGraphDescr contrdescrG, 
+        Pointer aggregates, 
+        long numaggregates, 
+        int VertexCombineOp, 
+        int VertexReduceOp, 
+        int EdgeCombineOp, 
+        int EdgeReduceOp, 
+        int flag);
+
+
+    /**
+     * <pre>
+     * nvGRAPH spectral clustering
+     * given a graph and solver parameters of struct SpectralClusteringParameter, 
+     * assign vertices to groups such as 
+     * intra-group connections are strong and/or inter-groups connections are weak 
+     * using spectral technique.
+     * </pre>
+     */
+    public static int nvgraphSpectralClustering(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr graph_descr, 
+        long weight_index, 
+        SpectralClusteringParameter params, 
+        Pointer clustering, 
+        Pointer eig_vals, 
+        Pointer eig_vects)
+    {
+        return checkResult(nvgraphSpectralClusteringNative(handle, graph_descr, weight_index, params, clustering, eig_vals, eig_vects));
+    }
+    private static native int nvgraphSpectralClusteringNative(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr graph_descr, 
+        long weight_index, 
+        SpectralClusteringParameter params, 
+        Pointer clustering, 
+        Pointer eig_vals, 
+        Pointer eig_vects);
+
+
+    /**
+     * <pre>
+     * nvGRAPH analyze clustering
+     * Given a graph, a clustering, and a metric
+     * compute the score that measures the clustering quality according to the metric.
+     * </pre>
+     */
+    public static int nvgraphAnalyzeClustering(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr graph_descr, 
+        long weight_index, 
+        int n_clusters, 
+        Pointer clustering, 
+        int metric, 
+        Pointer score)
+    {
+        return checkResult(nvgraphAnalyzeClusteringNative(handle, graph_descr, weight_index, n_clusters, clustering, metric, score));
+    }
+    private static native int nvgraphAnalyzeClusteringNative(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr graph_descr, 
+        long weight_index, 
+        int n_clusters, 
+        Pointer clustering, 
+        int metric, 
+        Pointer score);
+
+
+    /** nvGRAPH Triangles counting
+     * count number of triangles (cycles of size 3) formed by graph edges
+     */
+    public static int nvgraphTriangleCount(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr graph_descr, 
+        long[] result)
+    {
+        return checkResult(nvgraphTriangleCountNative(handle, graph_descr, result));
+    }
+    private static native int nvgraphTriangleCountNative(
+        nvgraphHandle handle, 
+        nvgraphGraphDescr graph_descr, 
+        long[] result);
 
 }
 

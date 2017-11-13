@@ -55,6 +55,18 @@ jfieldID fid_nvgraphCOOTopology32I_st_source_indices; // int *
 jfieldID fid_nvgraphCOOTopology32I_st_destination_indices; // int *
 jfieldID fid_nvgraphCOOTopology32I_st_tag; // int
 
+// Field IDs for the nvgraphTraversalParameter_t class
+jfieldID fid_nvgraphTraversalParameter_t_pad; // size_t[128]
+
+// Field IDs for the SpectralClusteringParameter class
+jfieldID fid_SpectralClusteringParameter_n_clusters; // int
+jfieldID fid_SpectralClusteringParameter_n_eig_vects; // int
+jfieldID fid_SpectralClusteringParameter_algorithm; // nvgraphSpectralClusteringType_t
+jfieldID fid_SpectralClusteringParameter_evs_tolerance; // float
+jfieldID fid_SpectralClusteringParameter_evs_max_iter; // int
+jfieldID fid_SpectralClusteringParameter_kmean_tolerance; // float
+jfieldID fid_SpectralClusteringParameter_kmean_max_iter; // int
+jfieldID fid_SpectralClusteringParameter_opt; // void *
 
 /**
  * Called when the library is loaded. Will initialize all
@@ -104,6 +116,20 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     if (!init(env, cls, fid_nvgraphCOOTopology32I_st_destination_indices, "destination_indices", "Ljcuda/Pointer;")) return JNI_ERR;
     if (!init(env, cls, fid_nvgraphCOOTopology32I_st_tag                , "tag"                , "I"))               return JNI_ERR;
 
+	// Initialize the field IDs for the nvgraphTraversalParameter_t class
+	if (!init(env, cls, "jcuda/jnvgraph/nvgraphTraversalParameter")) return JNI_ERR;
+	if (!init(env, cls, fid_nvgraphTraversalParameter_t_pad, "pad", "[J")) return JNI_ERR;
+
+	// Initialize the field IDs for the SpectralClusteringParameter class
+	if (!init(env, cls, "jcuda/jnvgraph/SpectralClusteringParameter")) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_n_clusters      , "n_clusters"     , "I"              )) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_n_eig_vects     , "n_eig_vects"    , "I"              )) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_algorithm       , "algorithm"      , "I"              )) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_evs_tolerance   , "evs_tolerance"  , "F"              )) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_evs_max_iter    , "evs_max_iter"   , "I"              )) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_kmean_tolerance , "kmean_tolerance", "F"              )) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_kmean_max_iter  , "kmean_max_iter" , "I"              )) return JNI_ERR;
+	if (!init(env, cls, fid_SpectralClusteringParameter_opt             , "opt"            , "Ljcuda/Pointer;")) return JNI_ERR;
 
     return JNI_VERSION_1_4;
 }
@@ -180,8 +206,8 @@ bool releaseNativeTopologyDataCSC32I(JNIEnv *env, nvgraphTopologyData* &nativeOb
         nvgraphCSCTopology32I_st* nativeTopologyData = (nvgraphCSCTopology32I_st*)nativeObject->nativeTopologyData;
         env->SetIntField(javaObject, fid_nvgraphCSCTopology32I_st_nvertices, nativeTopologyData->nvertices);
         env->SetIntField(javaObject, fid_nvgraphCSCTopology32I_st_nedges, nativeTopologyData->nedges);
-    }
-    delete nativeObject->nativeTopologyData;
+		delete nativeTopologyData;
+	}
     delete nativeObject;
     nativeObject = NULL;
     return true;
@@ -241,8 +267,8 @@ bool releaseNativeTopologyDataCSR32I(JNIEnv *env, nvgraphTopologyData* &nativeOb
         nvgraphCSRTopology32I_st* nativeTopologyData = (nvgraphCSRTopology32I_st*)nativeObject->nativeTopologyData;
         env->SetIntField(javaObject, fid_nvgraphCSRTopology32I_st_nvertices, nativeTopologyData->nvertices);
         env->SetIntField(javaObject, fid_nvgraphCSRTopology32I_st_nedges, nativeTopologyData->nedges);
-    }
-    delete nativeObject->nativeTopologyData;
+		delete nativeTopologyData;
+	}
     delete nativeObject;
     nativeObject = NULL;
     return true;
@@ -302,8 +328,8 @@ bool releaseNativeTopologyDataCOO32I(JNIEnv *env, nvgraphTopologyData* &nativeOb
         nvgraphCOOTopology32I_st* nativeTopologyData = (nvgraphCOOTopology32I_st*)nativeObject->nativeTopologyData;
         env->SetIntField(javaObject, fid_nvgraphCOOTopology32I_st_nvertices, nativeTopologyData->nvertices);
         env->SetIntField(javaObject, fid_nvgraphCOOTopology32I_st_nedges, nativeTopologyData->nedges);
-    }
-    delete nativeObject->nativeTopologyData;
+		delete nativeTopologyData;
+	}
     delete nativeObject;
     nativeObject = NULL;
     return true;
@@ -338,7 +364,7 @@ nvgraphTopologyData* initNativeTopologyData(JNIEnv *env, jobject &javaObject)
     }
     ThrowByName(env, "java/lang/IllegalArgumentException",
         "Topology data parameter does not have a valid type");
-    return false;
+    return NULL;
 }
 
 /**
@@ -374,6 +400,96 @@ bool releaseNativeTopologyData(JNIEnv *env, nvgraphTopologyData* &nativeObject, 
         "Topology data parameter does not have a valid type");
     return false;
 }
+
+
+
+bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalParameter_t param_native, bool fill)
+{
+	jlongArray pad = (jlongArray)env->GetObjectField(param, fid_nvgraphTraversalParameter_t_pad);
+	jsize len = env->GetArrayLength(pad);
+	jlong* padElements = env->GetLongArrayElements(pad, NULL);
+	for (int i = 0; i < len; i++)
+	{
+		param_native.pad[i] = (size_t)padElements[i];
+	}
+	env->ReleaseLongArrayElements(pad, padElements, 0);
+	return true;
+}
+
+bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t param_native, jobject param, bool writeBack)
+{
+	jlongArray pad = (jlongArray)env->GetObjectField(param, fid_nvgraphTraversalParameter_t_pad);
+	jsize len = env->GetArrayLength(pad);
+	jlong* padElements = env->GetLongArrayElements(pad, NULL);
+	for (int i = 0; i < len; i++)
+	{
+		padElements[i] = (jlong)param_native.pad[i];
+	}
+	env->ReleaseLongArrayElements(pad, padElements, 0);
+	return true;
+}
+
+bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalParameter_t * param_native, bool fill)
+{
+	if (param == NULL)
+	{
+		return true;
+	}
+	param_native = new nvgraphTraversalParameter_t();
+	return initNativeTraversalParameter(env, param, *param_native, fill);
+}
+
+bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t * param_native, jobject param, bool writeBack)
+{
+	if (param == NULL)
+	{
+		delete param_native;
+		return true;
+	}
+	if (!releaseNativeTraversalParameter(env, *param_native, param, writeBack)) return false;
+	delete param_native;
+	return true;
+}
+
+
+bool initNativeSpectralClusteringParameter(JNIEnv *env, jobject param, SpectralClusteringParameter * param_native, bool fill)
+{
+	if (param == NULL)
+	{
+		return true;
+	}
+	param_native = new SpectralClusteringParameter();
+	param_native->n_clusters = (int)env->GetIntField(param, fid_SpectralClusteringParameter_n_clusters);
+	param_native->n_eig_vects = (int)env->GetIntField(param, fid_SpectralClusteringParameter_n_eig_vects);
+	param_native->algorithm = (nvgraphSpectralClusteringType_t)env->GetIntField(param, fid_SpectralClusteringParameter_algorithm);
+	param_native->evs_tolerance = env->GetFloatField(param, fid_SpectralClusteringParameter_evs_tolerance);
+	param_native->evs_max_iter = (int)env->GetIntField(param, fid_SpectralClusteringParameter_evs_max_iter);
+	param_native->kmean_tolerance = env->GetFloatField(param, fid_SpectralClusteringParameter_kmean_tolerance);
+	param_native->kmean_max_iter = (int)env->GetIntField(param, fid_SpectralClusteringParameter_kmean_max_iter);
+	jobject opt = env->GetObjectField(param, fid_SpectralClusteringParameter_opt);
+
+	// TODO: As of CUDA 9.0.176, the optional parameters are not supported yet.
+	// Print a warning if they are not NULL.
+	if (opt != NULL) {
+		Logger::log(LOG_WARNING, "Optional spectral clustering parameters are not supported");
+	}
+	param_native->opt = NULL;
+	return true;
+}
+
+bool releaseNativeSpectralClusteringParameter(JNIEnv *env, SpectralClusteringParameter * param_native, jobject param, bool writeBack)
+{
+	if (param == NULL)
+	{
+		delete param_native;
+		return true;
+	}
+	delete param_native;
+	return true;
+}
+
+
+
 
 
 /*
@@ -414,6 +530,41 @@ JNIEXPORT jstring JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphStatusGetStringNat
 
     // Return the result
     return env->NewStringUTF(jniResult_native);
+}
+
+/** Return properties values for the nvGraph library, such as library version */
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetPropertyNative(JNIEnv *env, jclass cls, jint type, jintArray value)
+{
+    // Null-checks for non-primitive arguments
+    // type is primitive
+    if (value == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'value' is null for nvgraphGetProperty");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphGetProperty(type=%d, value=%p)\n",
+        type, value);
+
+    // Native variable declarations
+    libraryPropertyType type_native;
+    int value_native;
+
+    // Obtain native variable values
+    type_native = (libraryPropertyType)type;
+    // value is write-only
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphGetProperty(type_native, &value_native);
+
+    // Write back native variable values
+    // type is primitive
+    if (!set(env, value, 0, (jint)value_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
 }
 
 /** Open the library and create the handle */
@@ -1062,7 +1213,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphConvertGraphNative(JN
 }
 
 /** Update the edge set #setnum with the data in *edgeData, sets have 0-based index
-*  Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
+*/
 JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject edgeData, jlong setnum)
 {
     // Null-checks for non-primitive arguments
@@ -1119,7 +1270,7 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSetEdgeDataNative(JNI
 }
 
 /** Copy the edge set #setnum in *edgeData, sets have 0-based index
-* Conversions are not sopported so nvgraphTopologyType_t should match the graph structure */
+*/
 JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphGetEdgeDataNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject edgeData, jlong setnum)
 {
     // Null-checks for non-primitive arguments
@@ -1392,6 +1543,547 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSrSpmvNative(JNIEnv *
     return jniResult;
 }
 
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalParameterInitNative(JNIEnv *env, jclass cls, jobject param)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalParameterInit");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalParameterInit(param=%p)\n",
+        param);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t * param_native = NULL;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalParameterInit(param_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalSetDistancesIndexNative(JNIEnv *env, jclass cls, jobject param, jlong value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalSetDistancesIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // value is primitive
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalSetDistancesIndex(param=%p, value=%ld)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t * param_native = NULL;
+    size_t value_native = 0;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    value_native = (size_t)value;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalSetDistancesIndex(param_native, value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is primitive
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalGetDistancesIndexNative(JNIEnv *env, jclass cls, jobject param, jlongArray value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalGetDistancesIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (value == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'value' is null for nvgraphTraversalGetDistancesIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalGetDistancesIndex(param=%p, value=%p)\n",
+        param, value);
+
+    // Native variable declarations
+	nvgraphTraversalParameter_t param_native = { 0 };
+    size_t value_native;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is write-only
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalGetDistancesIndex(param_native, &value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!set(env, value, 0, (jlong)value_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalSetPredecessorsIndexNative(JNIEnv *env, jclass cls, jobject param, jlong value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalSetPredecessorsIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // value is primitive
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalSetPredecessorsIndex(param=%p, value=%ld)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t * param_native = NULL;
+    size_t value_native = 0;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    value_native = (size_t)value;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalSetPredecessorsIndex(param_native, value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is primitive
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalGetPredecessorsIndexNative(JNIEnv *env, jclass cls, jobject param, jlongArray value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalGetPredecessorsIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (value == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'value' is null for nvgraphTraversalGetPredecessorsIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalGetPredecessorsIndex(param=%p, value=%p)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t param_native = { 0 };
+    size_t value_native;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is write-only
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalGetPredecessorsIndex(param_native, &value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!set(env, value, 0, (jlong)value_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalSetEdgeMaskIndexNative(JNIEnv *env, jclass cls, jobject param, jlong value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalSetEdgeMaskIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // value is primitive
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalSetEdgeMaskIndex(param=%p, value=%ld)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t * param_native = NULL;
+    size_t value_native = 0;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    value_native = (size_t)value;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalSetEdgeMaskIndex(param_native, value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is primitive
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalGetEdgeMaskIndexNative(JNIEnv *env, jclass cls, jobject param, jlongArray value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalGetEdgeMaskIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (value == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'value' is null for nvgraphTraversalGetEdgeMaskIndex");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalGetEdgeMaskIndex(param=%p, value=%p)\n",
+        param, value);
+
+    // Native variable declarations
+	nvgraphTraversalParameter_t param_native = { 0 };
+    size_t value_native;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is write-only
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalGetEdgeMaskIndex(param_native, &value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!set(env, value, 0, (jlong)value_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalSetUndirectedFlagNative(JNIEnv *env, jclass cls, jobject param, jlong value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalSetUndirectedFlag");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // value is primitive
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalSetUndirectedFlag(param=%p, value=%ld)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t * param_native = NULL;
+    size_t value_native = 0;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    value_native = (size_t)value;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalSetUndirectedFlag(param_native, value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is primitive
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalGetUndirectedFlagNative(JNIEnv *env, jclass cls, jobject param, jlongArray value)
+{
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalGetUndirectedFlag");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (value == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'value' is null for nvgraphTraversalGetUndirectedFlag");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalGetUndirectedFlag(param=%p, value=%p)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t param_native = { 0 };
+    size_t value_native;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is write-only
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalGetUndirectedFlag(param_native, &value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!set(env, value, 0, (jlong)value_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalSetAlphaNative(JNIEnv *env, jclass cls, jobject param, jlong value)
+{
+	ThrowByName(env, "java/lang/UnsupportedOperationException", "This function is not implemented in CUDA 9.0.176");
+	return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	/*
+    // Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalSetAlpha");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // value is primitive
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalSetAlpha(param=%p, value=%ld)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t * param_native = NULL;
+    size_t value_native = 0;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    value_native = (size_t)value;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalSetAlpha(param_native, value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is primitive
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+	*/
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalGetAlphaNative(JNIEnv *env, jclass cls, jobject param, jlongArray value)
+{
+	ThrowByName(env, "java/lang/UnsupportedOperationException", "This function is not implemented in CUDA 9.0.176");
+	return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	/*
+	// Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalGetAlpha");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (value == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'value' is null for nvgraphTraversalGetAlpha");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalGetAlpha(param=%p, value=%p)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t param_native = { 0 };
+    size_t value_native;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is write-only
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalGetAlpha(param_native, &value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!set(env, value, 0, (jlong)value_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+	*/
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalSetBetaNative(JNIEnv *env, jclass cls, jobject param, jlong value)
+{
+	ThrowByName(env, "java/lang/UnsupportedOperationException", "This function is not implemented in CUDA 9.0.176");
+	return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	/*/
+	// Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalSetBeta");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // value is primitive
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalSetBeta(param=%p, value=%ld)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t * param_native = NULL;
+    size_t value_native = 0;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    value_native = (size_t)value;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalSetBeta(param_native, value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is primitive
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+	*/
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalGetBetaNative(JNIEnv *env, jclass cls, jobject param, jlongArray value)
+{
+	ThrowByName(env, "java/lang/UnsupportedOperationException", "This function is not implemented in CUDA 9.0.176");
+	return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	/*
+	// Null-checks for non-primitive arguments
+    if (param == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'param' is null for nvgraphTraversalGetBeta");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (value == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'value' is null for nvgraphTraversalGetBeta");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversalGetBeta(param=%p, value=%p)\n",
+        param, value);
+
+    // Native variable declarations
+    nvgraphTraversalParameter_t param_native = { 0 };
+    size_t value_native;
+
+    // Obtain native variable values
+    if (!initNativeTraversalParameter(env, param, param_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    // value is write-only
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversalGetBeta(param_native, &value_native);
+
+    // Write back native variable values
+    if (!releaseNativeTraversalParameter(env, param_native, param, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!set(env, value, 0, (jlong)value_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+	*/
+}
+
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTraversalNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jint traversalT, jobject source_vert, jobject params)
+{
+    // Null-checks for non-primitive arguments
+    if (handle == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'handle' is null for nvgraphTraversal");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (descrG == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'descrG' is null for nvgraphTraversal");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    // traversalT is primitive
+    if (source_vert == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'source_vert' is null for nvgraphTraversal");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    if (params == NULL)
+    {
+        ThrowByName(env, "java/lang/NullPointerException", "Parameter 'params' is null for nvgraphTraversal");
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+
+    // Log message
+    Logger::log(LOG_TRACE, "Executing nvgraphTraversal(handle=%p, descrG=%p, traversalT=%d, source_vert=%p, params=%p)\n",
+        handle, descrG, traversalT, source_vert, params);
+
+    // Native variable declarations
+    nvgraphHandle_t handle_native;
+    nvgraphGraphDescr_t descrG_native;
+    nvgraphTraversal_t traversalT_native;
+    int * source_vert_native = NULL;
+    nvgraphTraversalParameter_t params_native = { 0 };
+
+    // Obtain native variable values
+    handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
+    descrG_native = (nvgraphGraphDescr_t)getNativePointerValue(env, descrG);
+    traversalT_native = (nvgraphTraversal_t)traversalT;
+    PointerData *source_vert_pointerData = initPointerData(env, source_vert);
+    if (source_vert_pointerData == NULL)
+    {
+        return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    }
+    source_vert_native = (int *)source_vert_pointerData->getPointer(env);
+    if (!initNativeTraversalParameter(env, params, params_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Native function call
+    nvgraphStatus_t jniResult_native = nvgraphTraversal(handle_native, descrG_native, traversalT_native, source_vert_native, params_native);
+
+    // Write back native variable values
+    // handle is read-only
+    // descrG is read-only
+    // traversalT is primitive
+    if (!releasePointerData(env, source_vert_pointerData, JNI_ABORT)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+    if (!releaseNativeTraversalParameter(env, params_native, params, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+    // Return the result
+    jint jniResult = (jint)jniResult_native;
+    return jniResult;
+}
+
 /** nvGRAPH Single Source Shortest Path (SSSP)
 * Calculate the shortest path distance from a single vertex in the graph to all other vertices.
 */
@@ -1594,5 +2286,355 @@ JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphPagerankNative(JNIEnv
     return jniResult;
 }
 
+/**
+* <pre>
+* nvGRAPH contraction
+* given array of agregates contract graph with
+* given (Combine, Reduce) operators for Vertex Set
+* and Edge Set;
+* </pre>
+*/
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphContractGraphNative(JNIEnv *env, jclass cls, jobject handle, jobject descrG, jobject contrdescrG, jobject aggregates, jlong numaggregates, jint VertexCombineOp, jint VertexReduceOp, jint EdgeCombineOp, jint EdgeReduceOp, jint flag)
+{
+	// Null-checks for non-primitive arguments
+	if (handle == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'handle' is null for nvgraphContractGraph");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (descrG == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'descrG' is null for nvgraphContractGraph");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (contrdescrG == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'contrdescrG' is null for nvgraphContractGraph");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (aggregates == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'aggregates' is null for nvgraphContractGraph");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	// numaggregates is primitive
+	// VertexCombineOp is primitive
+	// VertexReduceOp is primitive
+	// EdgeCombineOp is primitive
+	// EdgeReduceOp is primitive
+	// flag is primitive
+
+	// Log message
+	Logger::log(LOG_TRACE, "Executing nvgraphContractGraph(handle=%p, descrG=%p, contrdescrG=%p, aggregates=%p, numaggregates=%ld, VertexCombineOp=%d, VertexReduceOp=%d, EdgeCombineOp=%d, EdgeReduceOp=%d, flag=%d)\n",
+		handle, descrG, contrdescrG, aggregates, numaggregates, VertexCombineOp, VertexReduceOp, EdgeCombineOp, EdgeReduceOp, flag);
+
+	// Native variable declarations
+	nvgraphHandle_t handle_native;
+	nvgraphGraphDescr_t descrG_native;
+	nvgraphGraphDescr_t contrdescrG_native;
+	int * aggregates_native = NULL;
+	size_t numaggregates_native = 0;
+	nvgraphSemiringOps_t VertexCombineOp_native;
+	nvgraphSemiringOps_t VertexReduceOp_native;
+	nvgraphSemiringOps_t EdgeCombineOp_native;
+	nvgraphSemiringOps_t EdgeReduceOp_native;
+	int flag_native = 0;
+
+	// Obtain native variable values
+	handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
+	descrG_native = (nvgraphGraphDescr_t)getNativePointerValue(env, descrG);
+	contrdescrG_native = (nvgraphGraphDescr_t)getNativePointerValue(env, contrdescrG);
+	PointerData *aggregates_pointerData = initPointerData(env, aggregates);
+	if (aggregates_pointerData == NULL)
+	{
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	aggregates_native = (int *)aggregates_pointerData->getPointer(env);
+	numaggregates_native = (size_t)numaggregates;
+	VertexCombineOp_native = (nvgraphSemiringOps_t)VertexCombineOp;
+	VertexReduceOp_native = (nvgraphSemiringOps_t)VertexReduceOp;
+	EdgeCombineOp_native = (nvgraphSemiringOps_t)EdgeCombineOp;
+	EdgeReduceOp_native = (nvgraphSemiringOps_t)EdgeReduceOp;
+	flag_native = (int)flag;
+
+	// Native function call
+	nvgraphStatus_t jniResult_native = nvgraphContractGraph(handle_native, descrG_native, contrdescrG_native, aggregates_native, numaggregates_native, VertexCombineOp_native, VertexReduceOp_native, EdgeCombineOp_native, EdgeReduceOp_native, flag_native);
+
+	// Write back native variable values
+	// handle is read-only
+	// descrG is read-only
+	// contrdescrG is read-only
+	// If the PointerData is not backed by native memory, then this call has to block
+	if (!isPointerBackedByNativeMemory(env, aggregates))
+	{
+		cudaDeviceSynchronize();
+	}
+	if (!releasePointerData(env, aggregates_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	// numaggregates is primitive
+	// VertexCombineOp is primitive
+	// VertexReduceOp is primitive
+	// EdgeCombineOp is primitive
+	// EdgeReduceOp is primitive
+	// flag is primitive
+
+	// Return the result
+	jint jniResult = (jint)jniResult_native;
+	return jniResult;
+}
+
+/**
+* <pre>
+* nvGRAPH spectral clustering
+* given a graph and solver parameters of struct SpectralClusteringParameter,
+* assign vertices to groups such as
+* intra-group connections are strong and/or inter-groups connections are weak
+* using spectral technique.
+* </pre>
+*/
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphSpectralClusteringNative(JNIEnv *env, jclass cls, jobject handle, jobject graph_descr, jlong weight_index, jobject params, jobject clustering, jobject eig_vals, jobject eig_vects)
+{
+	// Null-checks for non-primitive arguments
+	if (handle == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'handle' is null for nvgraphSpectralClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (graph_descr == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'graph_descr' is null for nvgraphSpectralClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	// weight_index is primitive
+	if (params == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'params' is null for nvgraphSpectralClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (clustering == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'clustering' is null for nvgraphSpectralClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (eig_vals == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'eig_vals' is null for nvgraphSpectralClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (eig_vects == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'eig_vects' is null for nvgraphSpectralClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+
+	// Log message
+	Logger::log(LOG_TRACE, "Executing nvgraphSpectralClustering(handle=%p, graph_descr=%p, weight_index=%ld, params=%p, clustering=%p, eig_vals=%p, eig_vects=%p)\n",
+		handle, graph_descr, weight_index, params, clustering, eig_vals, eig_vects);
+
+	// Native variable declarations
+	nvgraphHandle_t handle_native;
+	nvgraphGraphDescr_t graph_descr_native;
+	size_t weight_index_native = 0;
+	SpectralClusteringParameter * params_native = NULL;
+	int * clustering_native = NULL;
+	void * eig_vals_native = NULL;
+	void * eig_vects_native = NULL;
+
+	// Obtain native variable values
+	handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
+	graph_descr_native = (nvgraphGraphDescr_t)getNativePointerValue(env, graph_descr);
+	weight_index_native = (size_t)weight_index;
+	if (!initNativeSpectralClusteringParameter(env, params, params_native, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	PointerData *clustering_pointerData = initPointerData(env, clustering);
+	if (clustering_pointerData == NULL)
+	{
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	clustering_native = (int *)clustering_pointerData->getPointer(env);
+	PointerData *eig_vals_pointerData = initPointerData(env, eig_vals);
+	if (eig_vals_pointerData == NULL)
+	{
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	eig_vals_native = (void *)eig_vals_pointerData->getPointer(env);
+	PointerData *eig_vects_pointerData = initPointerData(env, eig_vects);
+	if (eig_vects_pointerData == NULL)
+	{
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	eig_vects_native = (void *)eig_vects_pointerData->getPointer(env);
+
+	// Native function call
+	nvgraphStatus_t jniResult_native = nvgraphSpectralClustering(handle_native, graph_descr_native, weight_index_native, params_native, clustering_native, eig_vals_native, eig_vects_native);
+
+	// Write back native variable values
+	// handle is read-only
+	// graph_descr is read-only
+	// weight_index is primitive
+	if (!releaseNativeSpectralClusteringParameter(env, params_native, params, true)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	// If the PointerData is not backed by native memory, then this call has to block
+	if (!isPointerBackedByNativeMemory(env, clustering))
+	{
+		cudaDeviceSynchronize();
+	}
+	if (!releasePointerData(env, clustering_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	// If the PointerData is not backed by native memory, then this call has to block
+	if (!isPointerBackedByNativeMemory(env, eig_vals))
+	{
+		cudaDeviceSynchronize();
+	}
+	if (!releasePointerData(env, eig_vals_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	// If the PointerData is not backed by native memory, then this call has to block
+	if (!isPointerBackedByNativeMemory(env, eig_vects))
+	{
+		cudaDeviceSynchronize();
+	}
+	if (!releasePointerData(env, eig_vects_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+	// Return the result
+	jint jniResult = (jint)jniResult_native;
+	return jniResult;
+}
+
+/**
+* <pre>
+* nvGRAPH analyze clustering
+* Given a graph, a clustering, and a metric
+* compute the score that measures the clustering quality according to the metric.
+* </pre>
+*/
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphAnalyzeClusteringNative(JNIEnv *env, jclass cls, jobject handle, jobject graph_descr, jlong weight_index, jint n_clusters, jobject clustering, jint metric, jobject score)
+{
+	// Null-checks for non-primitive arguments
+	if (handle == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'handle' is null for nvgraphAnalyzeClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (graph_descr == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'graph_descr' is null for nvgraphAnalyzeClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	// weight_index is primitive
+	// n_clusters is primitive
+	if (clustering == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'clustering' is null for nvgraphAnalyzeClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	// metric is primitive
+	if (score == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'score' is null for nvgraphAnalyzeClustering");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+
+	// Log message
+	Logger::log(LOG_TRACE, "Executing nvgraphAnalyzeClustering(handle=%p, graph_descr=%p, weight_index=%ld, n_clusters=%d, clustering=%p, metric=%d, score=%p)\n",
+		handle, graph_descr, weight_index, n_clusters, clustering, metric, score);
+
+	// Native variable declarations
+	nvgraphHandle_t handle_native;
+	nvgraphGraphDescr_t graph_descr_native;
+	size_t weight_index_native = 0;
+	int n_clusters_native = 0;
+	int * clustering_native = NULL;
+	nvgraphClusteringMetric_t metric_native;
+	float * score_native = NULL;
+
+	// Obtain native variable values
+	handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
+	graph_descr_native = (nvgraphGraphDescr_t)getNativePointerValue(env, graph_descr);
+	weight_index_native = (size_t)weight_index;
+	n_clusters_native = (int)n_clusters;
+	PointerData *clustering_pointerData = initPointerData(env, clustering);
+	if (clustering_pointerData == NULL)
+	{
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	clustering_native = (int *)clustering_pointerData->getPointer(env);
+	metric_native = (nvgraphClusteringMetric_t)metric;
+	PointerData *score_pointerData = initPointerData(env, score);
+	if (score_pointerData == NULL)
+	{
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	score_native = (float *)score_pointerData->getPointer(env);
+
+	// Native function call
+	nvgraphStatus_t jniResult_native = nvgraphAnalyzeClustering(handle_native, graph_descr_native, weight_index_native, n_clusters_native, clustering_native, metric_native, score_native);
+
+	// Write back native variable values
+	// handle is read-only
+	// graph_descr is read-only
+	// weight_index is primitive
+	// n_clusters is primitive
+	// If the PointerData is not backed by native memory, then this call has to block
+	if (!isPointerBackedByNativeMemory(env, clustering))
+	{
+		cudaDeviceSynchronize();
+	}
+	if (!releasePointerData(env, clustering_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	// metric is primitive
+	// If the PointerData is not backed by native memory, then this call has to block
+	if (!isPointerBackedByNativeMemory(env, score))
+	{
+		cudaDeviceSynchronize();
+	}
+	if (!releasePointerData(env, score_pointerData, 0)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+	// Return the result
+	jint jniResult = (jint)jniResult_native;
+	return jniResult;
+}
+
+/** nvGRAPH Triangles counting
+* count number of triangles (cycles of size 3) formed by graph edges
+*/
+JNIEXPORT jint JNICALL Java_jcuda_jnvgraph_JNvgraph_nvgraphTriangleCountNative(JNIEnv *env, jclass cls, jobject handle, jobject graph_descr, jlongArray result)
+{
+	// Null-checks for non-primitive arguments
+	if (handle == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'handle' is null for nvgraphTriangleCount");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (graph_descr == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'graph_descr' is null for nvgraphTriangleCount");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+	if (result == NULL)
+	{
+		ThrowByName(env, "java/lang/NullPointerException", "Parameter 'result' is null for nvgraphTriangleCount");
+		return JNVGRAPH_STATUS_INTERNAL_ERROR;
+	}
+
+	// Log message
+	Logger::log(LOG_TRACE, "Executing nvgraphTriangleCount(handle=%p, graph_descr=%p, result=%p)\n",
+		handle, graph_descr, result);
+
+	// Native variable declarations
+	nvgraphHandle_t handle_native;
+	nvgraphGraphDescr_t graph_descr_native;
+	uint64_t result_native;
+
+	// Obtain native variable values
+	handle_native = (nvgraphHandle_t)getNativePointerValue(env, handle);
+	graph_descr_native = (nvgraphGraphDescr_t)getNativePointerValue(env, graph_descr);
+	// result is write-only
+
+	// Native function call
+	nvgraphStatus_t jniResult_native = nvgraphTriangleCount(handle_native, graph_descr_native, &result_native);
+
+	// Write back native variable values
+	// handle is read-only
+	// graph_descr is read-only
+	if (!set(env, result, 0, (jlong)result_native)) return JNVGRAPH_STATUS_INTERNAL_ERROR;
+
+	// Return the result
+	jint jniResult = (jint)jniResult_native;
+	return jniResult;
+}
 
 

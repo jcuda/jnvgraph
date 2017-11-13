@@ -40,6 +40,7 @@ public class nvgraphStatus
     public static final int NVGRAPH_STATUS_INTERNAL_ERROR = 7;
     public static final int NVGRAPH_STATUS_TYPE_NOT_SUPPORTED = 8;
     public static final int NVGRAPH_STATUS_NOT_CONVERGED = 9;
+    public static final int NVGRAPH_STATUS_GRAPH_TYPE_NOT_SUPPORTED = 10;
 
     /** JNVgraph status returns */
     public static final int JNVGRAPH_STATUS_INTERNAL_ERROR      = 0x10000001;
@@ -71,6 +72,7 @@ public class nvgraphStatus
             case NVGRAPH_STATUS_INTERNAL_ERROR: return "NVGRAPH_STATUS_INTERNAL_ERROR";
             case NVGRAPH_STATUS_TYPE_NOT_SUPPORTED: return "NVGRAPH_STATUS_TYPE_NOT_SUPPORTED";
             case NVGRAPH_STATUS_NOT_CONVERGED: return "NVGRAPH_STATUS_NOT_CONVERGED";
+            case NVGRAPH_STATUS_GRAPH_TYPE_NOT_SUPPORTED: return "NVGRAPH_STATUS_GRAPH_TYPE_NOT_SUPPORTED";
             case JNVGRAPH_STATUS_INTERNAL_ERROR: return "JNVGRAPH_STATUS_INTERNAL_ERROR";
         }
         return "INVALID nvgraphStatus: "+n;
