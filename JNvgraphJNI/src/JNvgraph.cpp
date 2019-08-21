@@ -403,9 +403,9 @@ bool releaseNativeTopologyData(JNIEnv *env, nvgraphTopologyData* &nativeObject, 
 
 
 
-bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalParameter_t param_native, bool fill)
+bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalParameter_t &param_native, bool fill)
 {
-	jlongArray pad = (jlongArray)env->GetObjectField(param, fid_nvgraphTraversalParameter_t_pad);
+    jlongArray pad = (jlongArray)env->GetObjectField(param, fid_nvgraphTraversalParameter_t_pad);
 	jsize len = env->GetArrayLength(pad);
 	jlong* padElements = env->GetLongArrayElements(pad, NULL);
 	for (int i = 0; i < len; i++)
@@ -413,10 +413,10 @@ bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalPa
 		param_native.pad[i] = (size_t)padElements[i];
 	}
 	env->ReleaseLongArrayElements(pad, padElements, 0);
-	return true;
+    return true;
 }
 
-bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t param_native, jobject param, bool writeBack)
+bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t &param_native, jobject param, bool writeBack)
 {
 	jlongArray pad = (jlongArray)env->GetObjectField(param, fid_nvgraphTraversalParameter_t_pad);
 	jsize len = env->GetArrayLength(pad);
@@ -429,9 +429,9 @@ bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t pa
 	return true;
 }
 
-bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalParameter_t * param_native, bool fill)
+bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalParameter_t* &param_native, bool fill)
 {
-	if (param == NULL)
+    if (param == NULL)
 	{
 		return true;
 	}
@@ -439,7 +439,7 @@ bool initNativeTraversalParameter(JNIEnv *env, jobject param, nvgraphTraversalPa
 	return initNativeTraversalParameter(env, param, *param_native, fill);
 }
 
-bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t * param_native, jobject param, bool writeBack)
+bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t* &param_native, jobject param, bool writeBack)
 {
 	if (param == NULL)
 	{
@@ -452,7 +452,7 @@ bool releaseNativeTraversalParameter(JNIEnv *env, nvgraphTraversalParameter_t * 
 }
 
 
-bool initNativeSpectralClusteringParameter(JNIEnv *env, jobject param, SpectralClusteringParameter * param_native, bool fill)
+bool initNativeSpectralClusteringParameter(JNIEnv *env, jobject param, SpectralClusteringParameter* &param_native, bool fill)
 {
 	if (param == NULL)
 	{
@@ -477,7 +477,7 @@ bool initNativeSpectralClusteringParameter(JNIEnv *env, jobject param, SpectralC
 	return true;
 }
 
-bool releaseNativeSpectralClusteringParameter(JNIEnv *env, SpectralClusteringParameter * param_native, jobject param, bool writeBack)
+bool releaseNativeSpectralClusteringParameter(JNIEnv *env, SpectralClusteringParameter* &param_native, jobject param, bool writeBack)
 {
 	if (param == NULL)
 	{
